@@ -1,1 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IDH de mi estado</title>
+<style>
+  :root {
+    --fondo: #e9f1ec;
+    --tarjeta: #ffffff;
+    --pino: #1c4a3a;
+    --hoja: #3f8f56;
+    --hoja-oscuro: #2f7344;
+    --agua: #2a7b8c;
+    --texto: #15271f;
+    --texto-suave: #4a5f55;
+    --borde: #bfd3c7;
+    --resultado: #f3f8f5;
+  }
 
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; }
+
+  body {
+    min-height: 100vh;
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.55;
+    padding: 0 16px 48px;
+  }
+
+  header {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 40px 0 24px;
+  }
+
+  h1 {
+    margin: 0 0 14px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(2rem, 6vw, 3rem);
+    line-height: 1.1;
+    color: var(--pino);
+    letter-spacing: -0.01em;
+  }
+
+  header p {
+    margin: 0;
+    max-width: 60ch;
+    color: var(--texto-suave);
+    font-size: 1.05rem;
+  }
+
+  main {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .tarjeta {
+    background: var(--tarjeta);
+    border: 1px solid var(--borde);
+    border-top: 6px solid var(--hoja);
+    border-radius: 12px;
+    padding: 24px;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--pino);
+  }
+
+  .fila {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  select {
+    flex: 1 1 240px;
+    min-width: 0;
+    padding: 12px 14px;
+    font: inherit;
+    color: var(--texto);
+    background: #fff;
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+  }
+
+  button {
+    flex: 0 0 auto;
+    padding: 12px 28px;
+    font: inherit;
+    font-weight: 600;
+    color: #fff;
+    background: var(--hoja-oscuro);
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  button:hover:not(:disabled) { background: var(--pino); }
+
+  button:disabled {
+    background: #9db8a8;
+    cursor: not-allowed;
+  }
+
+  select:focus-visible,
+  button:focus-visible {
+    outline: 3px solid var(--agua);
+    outline-offset: 2px;
+  }
+
+  #resultado {
+    display: none;
+    margin-top: 20px;
+    padding: 16px 18px;
+    background: var(--resultado);
+    border: 1px solid var(--borde);
+    border-left: 6px solid var(--agua);
+    border-radius: 8px;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+  }
+
+  #resultado.visible { display: block; }
+
+  #resultado.error {
+    border-left-color: #a33a2b;
+    background: #fbf1ef;
+  }
+
+  @media (max-width: 480px) {
+    header { padding-top: 28px; }
+    .tarjeta { padding: 18px; }
+    button { flex: 1 1 100%; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>IDH de mi estado</h1>
+  <p>
+    El Índice de Desarrollo Humano (IDH) del PNUD resume en un valor de 0 a 1 tres capacidades
+    básicas de las personas: vivir una vida larga y saludable (salud), adquirir conocimientos
+    (educación) y tener un nivel de vida digno (ingreso). Elige una entidad y una inteligencia
+    artificial te explicará su IDH con los datos oficiales del PNUD.
+  </p>
+</header>
+
+<main>
+  <section class="tarjeta">
+    <label for="entidad">Entidad federativa</label>
+    <div class="fila">
+      <select id="entidad" name="entidad">
+        <option value="">Elige una entidad</option>
+        <option value="Aguascalientes">Aguascalientes</option>
+        <option value="Baja California">Baja California</option>
+        <option value="Baja California Sur">Baja California Sur</option>
+        <option value="Campeche">Campeche</option>
+        <option value="Chiapas">Chiapas</option>
+        <option value="Chihuahua">Chihuahua</option>
+        <option value="Ciudad de México">Ciudad de México</option>
+        <option value="Coahuila">Coahuila</option>
+        <option value="Colima">Colima</option>
+        <option value="Durango">Durango</option>
+        <option value="Guanajuato">Guanajuato</option>
+        <option value="Guerrero">Guerrero</option>
+        <option value="Hidalgo">Hidalgo</option>
+        <option value="Jalisco">Jalisco</option>
+        <option value="México">México</option>
+        <option value="Michoacán">Michoacán</option>
+        <option value="Morelos">Morelos</option>
+        <option value="Nayarit">Nayarit</option>
+        <option value="Nuevo León">Nuevo León</option>
+        <option value="Oaxaca">Oaxaca</option>
+        <option value="Puebla">Puebla</option>
+        <option value="Querétaro">Querétaro</option>
+        <option value="Quintana Roo">Quintana Roo</option>
+        <option value="San Luis Potosí">San Luis Potosí</option>
+        <option value="Sinaloa">Sinaloa</option>
+        <option value="Sonora">Sonora</option>
+        <option value="Tabasco">Tabasco</option>
+        <option value="Tamaulipas">Tamaulipas</option>
+        <option value="Tlaxcala">Tlaxcala</option>
+        <option value="Veracruz">Veracruz</option>
+        <option value="Yucatán">Yucatán</option>
+        <option value="Zacatecas">Zacatecas</option>
+      </select>
+      <button id="consultar" type="button" disabled>Consultar</button>
+    </div>
+
+    <div id="resultado" role="status" aria-live="polite"></div>
+  </section>
+</main>
+
+<script>
+  // Pega aquí la URL de tu webhook de Make (Webhooks → Custom webhook)
+  const WEBHOOK_URL = "https://hook.us2.make.com/ckl0qcxv59qj9dn08faqqdkdf91y5cx6";
+
+  const selector = document.getElementById("entidad");
+  const boton = document.getElementById("consultar");
+  const resultado = document.getElementById("resultado");
+
+  function mostrar(texto, esError) {
+    resultado.textContent = texto;
+    resultado.classList.add("visible");
+    resultado.classList.toggle("error", Boolean(esError));
+  }
+
+  selector.addEventListener("change", function () {
+    boton.disabled = selector.value === "";
+  });
+
+  boton.addEventListener("click", async function () {
+    const entidad = selector.value;
+    if (!entidad) return;
+
+    boton.disabled = true;
+    mostrar("Consultando...", false);
+
+    try {
+      const respuesta = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        body: new URLSearchParams({ entidad: entidad })
+      });
+
+      if (!respuesta.ok) {
+        throw new Error("Respuesta con estado " + respuesta.status);
+      }
+
+      // La respuesta llega como texto plano; se muestra tal cual, sin interpretarla como JSON.
+      const texto = await respuesta.text();
+      mostrar(texto, false);
+    } catch (error) {
+      mostrar("No se pudo obtener la información, intenta de nuevo.", true);
+    } finally {
+      boton.disabled = selector.value === "";
+    }
+  });
+</script>
+
+</body>
+</html>
