@@ -1,1 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Noticias climáticas del día</title>
+<style>
+  :root {
+    --fondo: #e8f0ea;
+    --tarjeta: #ffffff;
+    --pino: #1b4636;
+    --hoja: #3f8f56;
+    --hoja-oscuro: #2d7143;
+    --agua: #2a7b8c;
+    --texto: #14261e;
+    --texto-suave: #4a5f55;
+    --borde: #bcd2c5;
+    --resultado: #f3f8f5;
+    --error: #a33a2b;
+  }
 
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+
+  body {
+    min-height: 100vh;
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.55;
+    padding: 0 16px 56px;
+  }
+
+  header {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 0 24px;
+  }
+
+  h1 {
+    margin: 0 0 14px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(2rem, 6vw, 3rem);
+    line-height: 1.1;
+    color: var(--pino);
+    letter-spacing: -0.01em;
+  }
+
+  header p {
+    margin: 0;
+    max-width: 60ch;
+    color: var(--texto-suave);
+    font-size: 1.05rem;
+  }
+
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .tarjeta {
+    background: var(--tarjeta);
+    border: 1px solid var(--borde);
+    border-top: 6px solid var(--hoja);
+    border-radius: 12px;
+    padding: 24px;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--pino);
+  }
+
+  .fila {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  select {
+    flex: 1 1 240px;
+    min-width: 0;
+    padding: 12px 14px;
+    font: inherit;
+    color: var(--texto);
+    background: #fff;
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+  }
+
+  button {
+    flex: 0 0 auto;
+    padding: 12px 28px;
+    font: inherit;
+    font-weight: 600;
+    color: #fff;
+    background: var(--hoja-oscuro);
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  button:hover:not(:disabled) { background: var(--pino); }
+
+  button:disabled {
+    background: #9db8a8;
+    cursor: not-allowed;
+  }
+
+  select:focus-visible,
+  button:focus-visible,
+  #resultado a:focus-visible {
+    outline: 3px solid var(--agua);
+    outline-offset: 2px;
+  }
+
+  #zona-resultado {
+    display: none;
+    margin-top: 24px;
+  }
+
+  #zona-resultado.visible { display: block; }
+
+  .encabezado-resultado {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 14px;
+    margin-bottom: 10px;
+  }
+
+  .encabezado-resultado h2 {
+    margin: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.35rem;
+    color: var(--pino);
+  }
+
+  #fecha {
+    color: var(--texto-suave);
+    font-size: 0.95rem;
+  }
+
+  #resultado {
+    padding: 16px 18px;
+    background: var(--resultado);
+    border: 1px solid var(--borde);
+    border-left: 6px solid var(--agua);
+    border-radius: 8px;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+  }
+
+  #resultado.error {
+    border-left-color: var(--error);
+    background: #fbf1ef;
+  }
+
+  #resultado a {
+    color: var(--agua);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  #resultado a:hover { color: var(--pino); }
+
+  @media (max-width: 480px) {
+    header { padding-top: 28px; }
+    .tarjeta { padding: 18px; }
+    button { flex: 1 1 100%; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Noticias climáticas del día</h1>
+  <p>
+    Esta página muestra un resumen de las noticias ambientales más recientes,
+    explicado por inteligencia artificial. Elige un tema y pulsa el botón para
+    obtener las noticias de hoy.
+  </p>
+</header>
+
+<main>
+  <section class="tarjeta">
+    <label for="tema">Tema</label>
+    <div class="fila">
+      <select id="tema" name="tema">
+        <option value="">Elige un tema</option>
+        <option value="Impacto humano">Impacto humano</option>
+        <option value="Cambio climático">Cambio climático</option>
+        <option value="Consumo">Consumo</option>
+        <option value="Energía y soluciones">Energía y soluciones</option>
+        <option value="Local">Local</option>
+      </select>
+      <button id="ver" type="button" disabled>Ver noticias</button>
+    </div>
+
+    <div id="zona-resultado">
+      <div class="encabezado-resultado">
+        <h2>Noticias de hoy</h2>
+        <span id="fecha"></span>
+      </div>
+      <div id="resultado" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+  // Pega aquí la URL de tu webhook de Make (Webhooks → Custom webhook)
+  const WEBHOOK_URL = "https://hook.us2.make.com/oq7hoerx79dfu4y9cvabbwumcf7rv4tz";
+
+  const selector = document.getElementById("tema");
+  const boton = document.getElementById("ver");
+  const zona = document.getElementById("zona-resultado");
+  const resultado = document.getElementById("resultado");
+  const fecha = document.getElementById("fecha");
+
+  function fechaDeHoy() {
+    const texto = new Date().toLocaleDateString("es-MX", {
+      weekday: "long", day: "numeric", month: "long", year: "numeric"
+    });
+    return texto.charAt(0).toUpperCase() + texto.slice(1);
+  }
+
+  function mostrarMensaje(texto, esError) {
+    resultado.textContent = texto;
+    resultado.classList.toggle("error", Boolean(esError));
+    fecha.textContent = fechaDeHoy();
+    zona.classList.add("visible");
+  }
+
+  // Muestra el texto plano respetando los saltos de línea y convierte en enlaces
+  // clicables (que abren en otra pestaña) las líneas que empiezan con http.
+  function mostrarNoticias(texto) {
+    resultado.textContent = "";
+    resultado.classList.remove("error");
+
+    texto.split(/\r?\n/).forEach(function (linea, i, todas) {
+      const limpia = linea.trim();
+      let url = null;
+
+      if (/^https?:\/\//i.test(limpia)) {
+        try { url = new URL(limpia); } catch (e) { url = null; }
+      }
+
+      if (url) {
+        const enlace = document.createElement("a");
+        enlace.href = url.href;
+        enlace.target = "_blank";
+        enlace.rel = "noopener noreferrer";
+        enlace.textContent = limpia;
+        resultado.appendChild(enlace);
+      } else {
+        resultado.appendChild(document.createTextNode(linea));
+      }
+
+      if (i < todas.length - 1) {
+        resultado.appendChild(document.createTextNode("\n"));
+      }
+    });
+
+    fecha.textContent = fechaDeHoy();
+    zona.classList.add("visible");
+  }
+
+  selector.addEventListener("change", function () {
+    boton.disabled = selector.value === "";
+  });
+
+  boton.addEventListener("click", async function () {
+    const tema = selector.value;
+    if (!tema) return;
+
+    boton.disabled = true;
+    mostrarMensaje("Buscando y resumiendo noticias...", false);
+
+    try {
+      const respuesta = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        body: new URLSearchParams({ tema: tema })
+      });
+
+      if (!respuesta.ok) {
+        throw new Error("Respuesta con estado " + respuesta.status);
+      }
+
+      // La respuesta llega como texto plano; no se interpreta como JSON.
+      const texto = await respuesta.text();
+      if (texto.trim() === "") {
+        throw new Error("Respuesta vacía");
+      }
+
+      mostrarNoticias(texto);
+    } catch (error) {
+      mostrarMensaje("No se pudieron obtener las noticias, intenta de nuevo.", true);
+    } finally {
+      boton.disabled = selector.value === "";
+    }
+  });
+</script>
+
+</body>
+</html>
