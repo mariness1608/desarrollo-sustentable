@@ -1,1 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>¿Compras local o global?</title>
+<style>
+  :root {
+    --bosque: #1f4d3a;
+    --musgo: #5f8a3c;
+    --hoja: #dcebd8;
+    --rocio: #f1f6ee;
+    --corteza: #4a3b2a;
+    --linea: #c5d8c0;
+    --error: #a63d2f;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--rocio);
+    color: var(--corteza);
+    font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+  header {
+    background: var(--bosque);
+    color: #fff;
+    padding: 2.2rem 1.2rem 2.6rem;
+  }
+  .contenedor { max-width: 40rem; margin: 0 auto; }
+  h1 {
+    margin: 0 0 .6rem;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(2rem, 8vw, 3rem);
+    line-height: 1.1;
+    letter-spacing: -.01em;
+  }
+  header p { margin: 0; max-width: 34rem; color: #d9ead3; }
 
+  main { padding: 0 1.2rem 3rem; }
+  form { margin-top: -1.2rem; }
+
+  .progreso {
+    position: sticky; top: 0; z-index: 2;
+    background: var(--rocio);
+    padding: 1.2rem 0 .7rem;
+    font-size: .9rem;
+  }
+  .barra { height: .45rem; background: var(--hoja); border-radius: 1rem; overflow: hidden; margin-top: .35rem; }
+  .barra span {
+    display: block; height: 100%; width: 0;
+    background: var(--musgo); border-radius: 1rem;
+    transition: width .35s ease;
+  }
+
+  fieldset { border: 0; margin: 0; padding: 1.4rem 0; border-bottom: 1px solid var(--linea); }
+  legend {
+    padding: 0; margin-bottom: .8rem;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.2rem; font-weight: 700; line-height: 1.3;
+    color: var(--bosque);
+  }
+  fieldset.falta legend { color: var(--error); }
+  fieldset.falta legend::after { content: " (falta responder)"; font-size: .85rem; font-weight: 400; font-family: inherit; }
+
+  .opciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr)); gap: .55rem; }
+  .opcion {
+    display: flex; align-items: center; gap: .6rem;
+    min-height: 3rem; padding: .55rem .9rem;
+    background: #fff; border: 1.5px solid var(--linea); border-radius: .7rem;
+    cursor: pointer;
+  }
+  .opcion input { accent-color: var(--bosque); width: 1.15rem; height: 1.15rem; margin: 0; flex: none; }
+  .opcion:has(input:checked) { background: var(--hoja); border-color: var(--bosque); font-weight: 600; }
+  .opcion:has(input:focus-visible) { outline: 3px solid var(--musgo); outline-offset: 2px; }
+
+  .acciones { display: flex; flex-wrap: wrap; gap: .7rem; padding-top: 1.6rem; }
+  button {
+    font: inherit; font-weight: 600;
+    min-height: 3rem; padding: .6rem 1.4rem;
+    border-radius: .7rem; border: 2px solid var(--bosque);
+    cursor: pointer;
+  }
+  button:focus-visible { outline: 3px solid var(--musgo); outline-offset: 2px; }
+  #enviar { background: var(--bosque); color: #fff; }
+  #reporte { background: transparent; color: var(--bosque); }
+  button:disabled { opacity: .55; cursor: not-allowed; }
+  @media (max-width: 30rem) { button { flex: 1 1 100%; } }
+
+  #resultado {
+    margin-top: 1.4rem; padding: 1rem 1.1rem;
+    background: #fff; border-left: 6px solid var(--musgo); border-radius: .5rem;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+  }
+  #resultado.error { border-left-color: var(--error); color: var(--error); font-weight: 600; }
+  #resultado[hidden] { display: none; }
+  @media (prefers-reduced-motion: reduce) { .barra span { transition: none; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="contenedor">
+    <h1>¿Compras local o global?</h1>
+    <p>Encuesta anónima sobre hábitos de compra para la materia de Desarrollo Sustentable. Elige una opción en cada pregunta; no se guarda tu nombre.</p>
+  </div>
+</header>
+
+<main>
+  <div class="contenedor">
+    <form id="encuesta" novalidate>
+      <div class="progreso" aria-live="polite">
+        <span id="conteo">0 de 6 preguntas respondidas</span>
+        <div class="barra"><span id="avance"></span></div>
+      </div>
+
+      <div id="preguntas"></div>
+
+      <div class="acciones">
+        <button type="submit" id="enviar">Enviar respuesta</button>
+        <button type="button" id="reporte">Generar reporte</button>
+      </div>
+    </form>
+
+    <div id="resultado" role="status" aria-live="polite" hidden></div>
+  </div>
+</main>
+
+<script>
+  // Pega aquí la URL de tu webhook de Make (Webhooks > Custom webhook > Copy address to clipboard).
+  const WEBHOOK_URL = "https://hook.us2.make.com/x15wa5yoh6c9u8bz7etw9r489vxtfnn3";
+
+  const PREGUNTAS = [
+    { campo: "comida", texto: "¿Dónde compras la mayor parte de tu comida?",
+      opciones: ["Mercado o tianguis", "Tienda de barrio", "Supermercado", "En línea"] },
+    { campo: "ropa", texto: "¿Dónde compras tu ropa?",
+      opciones: ["Negocio local", "Tienda departamental", "App internacional", "Segunda mano"] },
+    { campo: "apps", texto: "¿Con qué frecuencia compras en apps internacionales?",
+      opciones: ["Nunca", "Una vez al mes", "Varias veces al mes", "Cada semana"] },
+    { campo: "criterio", texto: "¿Qué pesa más al comprar?",
+      opciones: ["Precio", "Calidad", "Cercanía", "Apoyar lo local", "Marca"] },
+    { campo: "origen", texto: "¿Sabes de dónde viene lo que compras?",
+      opciones: ["Sí", "A veces", "No"] },
+    { campo: "edad", texto: "Rango de edad",
+      opciones: ["Menos de 18", "18 a 29", "30 a 49", "50 o más"] }
+  ];
+
+  const form = document.getElementById("encuesta");
+  const contenedor = document.getElementById("preguntas");
+  const botonEnviar = document.getElementById("enviar");
+  const botonReporte = document.getElementById("reporte");
+  const resultado = document.getElementById("resultado");
+  const conteo = document.getElementById("conteo");
+  const avance = document.getElementById("avance");
+
+  // Dibuja las preguntas
+  PREGUNTAS.forEach(function (p) {
+    const fs = document.createElement("fieldset");
+    fs.dataset.campo = p.campo;
+    const lg = document.createElement("legend");
+    lg.textContent = p.texto;
+    fs.appendChild(lg);
+    const grupo = document.createElement("div");
+    grupo.className = "opciones";
+    p.opciones.forEach(function (op) {
+      const etiqueta = document.createElement("label");
+      etiqueta.className = "opcion";
+      const radio = document.createElement("input");
+      radio.type = "radio";
+      radio.name = p.campo;
+      radio.value = op;
+      const texto = document.createElement("span");
+      texto.textContent = op;
+      etiqueta.appendChild(radio);
+      etiqueta.appendChild(texto);
+      grupo.appendChild(etiqueta);
+    });
+    fs.appendChild(grupo);
+    contenedor.appendChild(fs);
+  });
+
+  function respondidas() {
+    const datos = new FormData(form);
+    return PREGUNTAS.filter(function (p) { return datos.get(p.campo); }).length;
+  }
+
+  function actualizarProgreso() {
+    const n = respondidas();
+    conteo.textContent = n + " de " + PREGUNTAS.length + " preguntas respondidas";
+    avance.style.width = (n / PREGUNTAS.length * 100) + "%";
+  }
+
+  form.addEventListener("change", function (e) {
+    const fs = e.target.closest("fieldset");
+    if (fs) fs.classList.remove("falta");
+    actualizarProgreso();
+  });
+
+  function mostrar(texto, esError) {
+    resultado.hidden = false;
+    resultado.className = esError ? "error" : "";
+    resultado.textContent = texto;
+  }
+
+  function bloquear(estado) {
+    botonEnviar.disabled = estado;
+    botonReporte.disabled = estado;
+  }
+
+  // Envía los datos como formulario (sin JSON ni encabezados personalizados)
+  async function enviarAMake(campos) {
+    mostrar("Procesando...");
+    bloquear(true);
+    try {
+      const respuesta = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        body: new URLSearchParams(campos)
+      });
+      if (!respuesta.ok) throw new Error("Respuesta " + respuesta.status);
+      const texto = await respuesta.text();
+      mostrar(texto.trim() || "Listo, tu respuesta se envió.");
+      return true;
+    } catch (err) {
+      mostrar("No se pudo conectar, intenta de nuevo.", true);
+      return false;
+    } finally {
+      bloquear(false);
+    }
+  }
+
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    const datos = new FormData(form);
+    const campos = { accion: "respuesta" };
+    let primeraFalta = null;
+
+    PREGUNTAS.forEach(function (p) {
+      const valor = datos.get(p.campo);
+      const fs = contenedor.querySelector('[data-campo="' + p.campo + '"]');
+      if (valor) {
+        campos[p.campo] = valor;
+        fs.classList.remove("falta");
+      } else {
+        fs.classList.add("falta");
+        if (!primeraFalta) primeraFalta = fs;
+      }
+    });
+
+    if (primeraFalta) {
+      mostrar("Responde las seis preguntas antes de enviar.", true);
+      primeraFalta.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    const exito = await enviarAMake(campos);
+    if (exito) {
+      form.reset();
+      actualizarProgreso();
+    }
+  });
+
+  botonReporte.addEventListener("click", function () {
+    enviarAMake({ accion: "reporte" });
+  });
+</script>
+</body>
+</html>
