@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Huella energética de la nube</title>
+<style>
+:root{--verde:#1b5e20;--claro:#e8f5e9;--medio:#66bb6a;--texto:#1b2a1b;--fondo:#f4faf4;--card:#fff}
+@media (prefers-color-scheme:dark){:root{--verde:#a5d6a7;--claro:#1c2b1e;--medio:#388e3c;--texto:#e6f2e6;--fondo:#101710;--card:#182118}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,Arial,sans-serif;background:var(--fondo);color:var(--texto);line-height:1.5}
+main{max-width:720px;margin:0 auto;padding:20px 16px 40px}
+h1{color:var(--verde);margin:.2em 0}
+.card{background:var(--card);border:1px solid var(--medio);border-radius:14px;padding:16px;margin-top:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+label{display:block;font-size:.92rem;font-weight:600}
+input{width:100%;padding:10px;margin-top:4px;border:1px solid var(--medio);border-radius:8px;font-size:1rem;background:var(--claro);color:var(--texto)}
+button{margin-top:16px;width:100%;padding:14px;font-size:1.05rem;font-weight:700;border:0;border-radius:10px;background:var(--medio);color:#fff;cursor:pointer}
+button:disabled{opacity:.6;cursor:wait}
+#resultado{white-space:pre-line;display:none;border-left:6px solid var(--medio);background:var(--claro)}
+</style>
+</head>
+<body>
+<main>
+<h1>🌿 Huella energética de la nube</h1>
+<p>Cada acción digital (ver un video, subir una foto, preguntarle algo a una IA) se procesa en centros de datos que consumen energía y agua de enfriamiento. Esta página estima tu huella.</p>
+
+<div class="card">
+<div class="grid">
+<label>Video en streaming (horas al día)<input type="number" id="video" min="0" step="any" value="0"></label>
+<label>Música en streaming (horas al día)<input type="number" id="musica" min="0" step="any" value="0"></label>
+<label>Redes sociales (horas al día)<input type="number" id="redes" min="0" step="any" value="0"></label>
+<label>Videollamadas (horas a la semana)<input type="number" id="videollamadas" min="0" step="any" value="0"></label>
+<label>Juegos en línea (horas al día)<input type="number" id="juegos" min="0" step="any" value="0"></label>
+<label>GB guardados en la nube<input type="number" id="nube" min="0" step="any" value="0"></label>
+<label>Consultas a chatbots de IA (al día)<input type="number" id="ia" min="0" step="any" value="0"></label>
+<label>Correos que envías (al día)<input type="number" id="correos" min="0" step="any" value="0"></label>
+</div>
+<button id="btn" type="button">Calcular mi huella</button>
+</div>
+
+<div class="card" id="resultado"></div>
+</main>
+
+<script>
+// Pega aquí la URL del webhook de Make (Webhooks → Custom webhook)
+const WEBHOOK_URL = "https://hook.us2.make.com/a7wl0u8jk25qyo4uf5zqv8xjxbw7t8in";
+
+const campos = ["video","musica","redes","videollamadas","juegos","nube","ia","correos"];
+const btn = document.getElementById("btn");
+const caja = document.getElementById("resultado");
+
+btn.addEventListener("click", async () => {
+  const datos = new URLSearchParams();
+  campos.forEach(c => {
+    const v = parseFloat(document.getElementById(c).value);
+    datos.append(c, isNaN(v) || v < 0 ? 0 : v);
+  });
+  btn.disabled = true;
+  btn.textContent = "Calculando...";
+  caja.style.display = "block";
+  caja.textContent = "Calculando...";
+  try {
+    const r = await fetch(WEBHOOK_URL, { method: "POST", body: datos });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    caja.textContent = await r.text();
+  } catch (e) {
+    caja.textContent = "No se pudo calcular, intenta de nuevo.";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Calcular mi huella";
+  }
+});
+</script>
+</body>
+</html>
